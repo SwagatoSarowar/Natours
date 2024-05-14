@@ -4,6 +4,7 @@ const cors = require("cors");
 const errorController = require("./controllers/errorController");
 const AppError = require("./utils/appError");
 const tourRouter = require("./routes/tourRoute");
+const userRouter = require("./routes/userRoute");
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(cors());
 
 // routes
 app.use("/api/v1/tours", tourRouter);
+app.use("/api/v1/users", userRouter);
 
 // error handler for no api endpoint match
 app.all("*", function (req, res, next) {
