@@ -95,7 +95,7 @@ tourSchema.pre("save", function (next) {
 
 /*
  Query middleware (runs before quering the document)
- regex /^find/ matched all the find methods and make sure that the secret doesnt get queried
+ regex /^find/ matches all the find methods and make sure that the secret doesn't get queried
  for only find other query like findOne or findById will get the secret data
 */
 tourSchema.pre(/^find/, function (next) {
@@ -114,7 +114,7 @@ tourSchema.pre(/^find/, function (next) {
 
 // Aggregation middleware (runs before or after aggregation)
 tourSchema.pre("aggregate", function (next) {
-  //this.pipeline() gives use the aggregate pipeline object and we can remove or add any property in it
+  //this.pipeline() gives us the aggregate pipeline object and we can remove or add any property in it
   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
   next();
 });
