@@ -1,7 +1,6 @@
 const validator = require("validator");
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
-const AppError = require("../utils/appError");
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -51,7 +50,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// this here is an instance method which will be available in all the instances of the user model
+// this method here is an instance method which will be available in all the instances of the user model
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword
