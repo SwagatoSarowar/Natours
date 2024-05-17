@@ -38,6 +38,14 @@ const userSchema = new mongoose.Schema({
       message: "Confirm password doesn't match given password",
     },
   },
+  passwordChangedAt: {
+    type: Date,
+  },
+  role: {
+    type: String,
+    enum: ["user", "guide", "lead-guide", "admin"],
+    default: "user",
+  },
 });
 
 userSchema.pre("save", async function (next) {
@@ -56,6 +64,14 @@ userSchema.methods.correctPassword = async function (
   userPassword
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.isPasswordChangedAfterJWT = function (jwtIssuedAt) {
+  if (this.passwordChangedAt) {
+    return new Date(this.passwordChangedAt).getTime() > jwtIssuedAt * 1000;
+  }
+
+  return false;
 };
 
 const User = mongoose.model("User", userSchema);
