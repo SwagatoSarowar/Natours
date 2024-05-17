@@ -1,8 +1,10 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { promisify } = require("util");
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
+const sendEmail = require("../utils/sendEmail");
 
 const signToken = function (id) {
   const token = jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -59,13 +61,102 @@ exports.forgetPassword = catchAsync(async function (req, res, next) {
   const { email } = req.body;
   const user = await User.findOne({ email });
 
-  if (!user) {
-    next(new AppError("No user found by that email", 404));
+  if (!user) return next(new AppError("User doesn't exist", 404));
+
+  const resetToken = user.generatePasswordResetToken();
+  // some changes are made in the method so in order to save it in the db we call .save() method
+  // we also need to remove all the validatin otherwise it will ask for all the required fields (like  password .)
+  await user.save({ validateBeforeSave: false });
+
+  // we will send the user an email with the password reset link to reset his password.
+  const passwordResetURL = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/users/resetPassword/${resetToken}`;
+
+  // here its not enough for our global error handler to handle the error because in case of any error we need to reset the token and token expires
+  // so we need to use try catch here.
+
+  try {
+    await sendEmail({
+      email,
+      subject: "Password reset link",
+      message: `Reset Your password here ${passwordResetURL}`,
+    });
+
+    // sending response to client
+    res.status(200).json({
+      status: "success",
+      message:
+        "Password reset email has been send to your email. (Valid for 10 mins)",
+    });
+  } catch (error) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    next(
+      new AppError(
+        "There was an error sending email. Please try again later.",
+        500
+      )
+    );
   }
 });
 
 // RESET PASSWORD
-exports.resetPassword = catchAsync(async function (req, res, next) {});
+exports.resetPassword = catchAsync(async function (req, res, next) {
+  const { token } = req.params;
+  const { newPassword, confirmPassword } = req.body;
+  const passwordResetToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  // checking if the user exist with valid token
+  if (!user)
+    return next(
+      new AppError("Token is invalid or expired. Please try again", 400)
+    );
+
+  user.password = newPassword;
+  user.confirmPassword = confirmPassword;
+  // user.passwordChangedAt = Date.now();  ====> this one we can do here, but better if we do that in the schema as a pre middleware.
+  user.passwordResetExpires = undefined;
+  user.passwordResetToken = undefined;
+
+  await user.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Password has been updated. Try login with your new password",
+  });
+});
+
+// UPDATE PASSWORD
+exports.updatePassword = catchAsync(async function (req, res, next) {
+  const user = await User.findOne(req.user._id).select("+password");
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (!(await user.correctPassword(currentPassword, user.password)))
+    return next(new AppError("Incorrect password.", 400));
+
+  user.password = newPassword;
+  user.confirmPassword = confirmPassword;
+
+  await user.save();
+
+  res.status(200).json({
+    status: "success",
+    message:
+      "Your password has been changed. Please login again with new password.",
+  });
+});
 
 // route protectors middleware that checks if the user is valid and logged in by checking the recieved jwt.
 exports.protect = catchAsync(async function (req, res, next) {
