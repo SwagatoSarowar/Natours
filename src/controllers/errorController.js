@@ -26,14 +26,17 @@ const handleValidationError = function (error) {
 
 // handlign duplicate field error
 const handleDuplicateFieldError = function (error) {
-  return new AppError(error.message, 400);
+  const message = `Duplicate field value : ${error.message.match(
+    /"(.*?)"/
+  )[0]}. Please enter another one.`;
+  return new AppError(message, 400);
 };
 
 /* global error handling function (if a middleware has 4 arguments, express will automatically take that as an error handling middleware and 
   for any error in the app, this function will be called)
 */
 const errorController = function (error, req, res, next) {
-  // return res.json(error.code);
+  // return res.json(error);
   error.statusCode = error.statusCode || 500;
   error.status = error.status || "error";
 
