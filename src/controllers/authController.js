@@ -27,6 +27,20 @@ exports.signup = catchAsync(async function (req, res) {
 
   const token = signToken(newUser._id);
 
+  // sending jwt via cookie.
+  res.cookie("jwt", token, {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ), // turning days into milisec.
+    // ! keeping secure to false for now, so that it works with http. if set to false it wont work unless its https
+    // secure: true,
+    httpOnly: true, // makes sure that browser cant change the token, its http only.
+  });
+
+  // even the password select is false in schema, as its a new user it shows the password when sending the data back. so we set the password to undefined
+  // thus it won't send the password, also as we didnt use save on newUser, the password won't be undefined in the db.
+  newUser.password = undefined;
+
   res.status(201).json({ status: "success", token, data: { user: newUser } });
 });
 
@@ -51,6 +65,16 @@ exports.signin = catchAsync(async function (req, res, next) {
 
   // signing a jwtoken
   const token = signToken(user._id);
+
+  // sending jwt via cookie.
+  res.cookie("jwt", token, {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ), // turning days into milisec.
+    // ! keeping secure to false for now, so that it works with http. if set to false it wont work unless its https
+    // secure: true,
+    httpOnly: true, // makes sure that browser cant change the token, its http only.
+  });
 
   // sending response to client
   res.status(200).json({ status: "success", token });
