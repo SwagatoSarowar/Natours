@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const mongoSanitize = require("express-mongo-sanitize");
 
 const errorController = require("./controllers/errorController");
 const AppError = require("./utils/appError");
@@ -17,8 +19,11 @@ const limiter = rateLimit({
 });
 
 // global middlewares
+app.use(helmet()); // sets some security headers
 app.use(express.json());
 app.use(cors());
+// sanitize the data after gettind the body / data.
+app.use(mongoSanitize());
 // limiter will be applied in all the routes that starts with api, thus all the api routes.
 app.use("/api", limiter);
 
