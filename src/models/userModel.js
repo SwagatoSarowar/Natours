@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema({
     required: [true, "Please confirm the password"],
     validate: {
       // only works on .create() and .save()
+      // for findOneAndUpdate we have to put runValidator to true
       validator: function (el) {
         return el === this.password;
       },
@@ -52,6 +53,11 @@ const userSchema = new mongoose.Schema({
   },
   passwordResetExpires: {
     type: Date,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+    select: false,
   },
 });
 
@@ -69,7 +75,14 @@ userSchema.pre("save", async function (next) {
 userSchema.pre("save", function (next) {
   if (!this.isModified("password") || this.isNew) return next();
 
+  // * if we need to generate a jwt with this we can subtract 1seconds from current time because some time it takes a bit of time to save the document in the db. so it might happend that the jwt gets generated first and the ispassword changed is saved later which will cause the jwt to be invalid as the password changed time is later than the iat of jwt
+
   this.passwordChangedAt = Date.now();
+  next();
+});
+
+userSchema.pre(/^find/, function (next) {
+  this.find({ isActive: true });
   next();
 });
 
