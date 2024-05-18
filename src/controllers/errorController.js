@@ -26,10 +26,20 @@ const handleValidationError = function (error) {
 
 // handlign duplicate field error
 const handleDuplicateFieldError = function (error) {
-  const message = `Duplicate field value : ${error.message.match(
-    /"(.*?)"/
-  )[0]}. Please enter another one.`;
+  const message = `Duplicate field value : ${
+    error.message.match(/"(.*?)"/)[0]
+  }. Please enter another one.`;
   return new AppError(message, 400);
+};
+
+// handling jwt expired error
+const handleTokenExpireError = function () {
+  return new AppError("The token has been expired. Please login again", 401);
+};
+
+// handling jwt invalid signature error
+const handleJWTError = function () {
+  return new AppError("Invalid token. Please login again", 401);
 };
 
 /* global error handling function (if a middleware has 4 arguments, express will automatically take that as an error handling middleware and 
@@ -42,6 +52,8 @@ const errorController = function (error, req, res, next) {
 
   if (error.name === "CastError") error = handleCastError(error);
   if (error.name === "ValidationError") error = handleValidationError(error);
+  if (error.name === "TokenExpiredError") error = handleTokenExpireError();
+  if (error.name === "JsonWebTokenError") error = handleJWTError();
   if (error.code === 11000) error = handleDuplicateFieldError(error);
 
   sendErrorRes(error, res);

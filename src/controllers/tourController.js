@@ -49,7 +49,7 @@ exports.updateTour = catchAsync(async function (req, res) {
 });
 
 // DELETE TOUR
-exports.deleteTour = catchAsync(async function (req, res) {
+exports.deleteTour = catchAsync(async function (req, res, next) {
   const id = req.params.id;
   const tour = await Tour.findByIdAndDelete(id);
 
