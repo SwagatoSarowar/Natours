@@ -28,6 +28,34 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // GeoJSON is special data type in mongoose that can turn latetude and longitude to location
+    // inorder to make a schema for that we need type object and coordinates object (atleast these 2)
+    // also this startLocation itself is an object. so type declarations will be nested.
+    startLocation: {
+      type: {
+        type: String,
+        default: "Point", // start location is a point so default is a point and also it cannot be anything other than point.
+        enum: ["Point"],
+      },
+      coordinates: [Number], // coordinates is just an array of numbers.
+      address: String,
+      description: String,
+    },
+    // locations will be a document embeded inside the tour document. so it needs to be an array of objects
+    // in this case its an array of GeoJSON data.
+    locations: [
+      {
+        type: {
+          type: String,
+          default: "Point",
+          enum: ["Point"],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number, // in which number of day, where will people go. like in 2nd day, location will be dhaka.
+      },
+    ],
     ratingsAverage: {
       type: Number,
       default: 4.5,
