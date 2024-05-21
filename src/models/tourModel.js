@@ -56,6 +56,14 @@ const tourSchema = new mongoose.Schema(
         day: Number, // in which number of day, where will people go. like in 2nd day, location will be dhaka.
       },
     ],
+    // we can either embed or reference the tourGuide. the downside of embeding is if the user changes his data
+    // the tour guides data will remail outdated. so we need to use reference here. (we can embed using pre save)
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+      },
+    ],
     ratingsAverage: {
       type: Number,
       default: 4.5,
@@ -128,6 +136,15 @@ tourSchema.pre("save", function (next) {
 */
 tourSchema.pre(/^find/, function (next) {
   this.find({ secretTour: { $ne: true } });
+  next();
+});
+
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "guides",
+    select: "-__v -passwordChangedAt",
+  });
+
   next();
 });
 
