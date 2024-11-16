@@ -22,7 +22,9 @@ exports.getAllTour = catchAsync(async function (req, res) {
 // GET TOUR BY ID
 exports.getTour = catchAsync(async function (req, res, next) {
   const id = req.params.id;
-  const tour = await Tour.findById(id);
+  // review is here a virtual field and this is virtual populating, we need to do this for the single tour api
+  // as we dont need this detail for other api end points.
+  const tour = await Tour.findById(id).populate("reviews");
 
   if (!tour) return next(new AppError("No tour found with given ID", 404));
 

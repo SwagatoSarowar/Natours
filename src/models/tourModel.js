@@ -123,6 +123,15 @@ tourSchema.virtual("durationWeek").get(function () {
   return this.duration / 7;
 });
 
+/* instead of populating the tour with reviews (as it will grow and make the review reference array big), we can
+  virtually populate a field (in this case the review field of tour).
+*/
+tourSchema.virtual("reviews", {
+  ref: "Review",
+  foreignField: "tour",
+  localField: "_id",
+});
+
 // Document middleware for mongoose (works same way as express)
 tourSchema.pre("save", function (next) {
   this.slug = this.name.toLowerCase().split(" ").join("-");
