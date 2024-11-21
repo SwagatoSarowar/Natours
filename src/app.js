@@ -47,7 +47,7 @@ app.use("/api/v1/users", userRouter);
 
 // error handler for no api endpoint match
 app.all("*", function (req, res, next) {
-  // if next function gets an argument it will take that as an error from anywhere in app
+  // if next function gets an argument it will take that as an error from anywhere in app.
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 });
 
